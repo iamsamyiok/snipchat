@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<style>
+:root{--bg:#f5f7fb;--card:#fff;--line:#e3e9f4;--tx:#1c2438;--tx2:#5a6b8c;--blue:#2563eb;--grad:linear-gradient(135deg,#2563eb,#7c3aed)}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;overflow:hidden;background:#1a2338;font:13.5px/1.5 system-ui,'PingFang SC',sans-serif}
+#stage{position:absolute;inset:0;display:grid;place-items:center}
+#cv{max-width:100%;max-height:100%;box-shadow:0 12px 48px rgba(0,0,0,.5);cursor:crosshair}
+#bar{position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:10;display:flex;gap:7px;
+  background:rgba(255,255,255,.95);border:1px solid var(--line);border-radius:13px;padding:8px 10px;
+  box-shadow:0 8px 28px rgba(0,0,0,.25)}
+.t{border:1.5px solid var(--line);background:#fff;border-radius:9px;padding:7px 12px;font-size:12.5px;
+  font-weight:600;color:var(--tx2);cursor:pointer;white-space:nowrap}
+.t:hover{border-color:#a9bce2;color:var(--tx)}
+.t.on{background:var(--grad);border-color:transparent;color:#fff}
+.t.go{background:var(--grad);border:none;color:#fff;padding:7px 15px}
+.t.danger:hover{border-color:#f3b9b3;color:#dc2626}
+#colorRow{display:none;gap:6px;align-items:center;margin-left:4px;padding-left:10px;border-left:1px solid var(--line)}
+#colorRow.show{display:flex}
+.sw{width:20px;height:20px;border-radius:50%;cursor:pointer;border:2.5px solid transparent}
+.sw.on{border-color:#1c2438;box-shadow:0 0 0 2px #fff inset}
+#toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(70px);background:#059669;color:#fff;
+  padding:11px 20px;border-radius:11px;font-weight:600;transition:.35s;z-index:99;box-shadow:0 10px 30px rgba(5,150,105,.4)}
+#toast.show{transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<div id="stage"><canvas id="cv"></canvas></div>
+<div id="bar">
+  <button class="t on" data-tool="rect">▭ 框</button>
+  <button class="t" data-tool="arrow">→ 箭头</button>
+  <button class="t" data-tool="text">T 文字</button>
+  <button class="t" data-tool="mosaic">▦ 马赛克</button>
+  <div id="colorRow">
+    <span class="sw on" data-c="#dc2626" style="background:#dc2626"></span>
+    <span class="sw" data-c="#2563eb" style="background:#2563eb"></span>
+    <span class="sw" data-c="#059669" style="background:#059669"></span>
+    <span class="sw" data-c="#f59e0b" style="background:#f59e0b"></span>
+    <span class="sw" data-c="#111827" style="background:#111827"></span>
+  </div>
+  <button class="t" id="undo">↩ 撤销</button>
+  <button class="t danger" id="cancel">取消</button>
+  <button class="t go" id="done">✓ 完成</button>
+</div>
+<div id="toast"></div>
+<script src="editor.js"></script>
+</body>
+</html>
