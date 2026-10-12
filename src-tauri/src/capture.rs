@@ -2,7 +2,7 @@
 use base64::Engine;
 use serde_json::{json, Value};
 use std::sync::{Mutex, OnceLock};
-use tauri::{AppHandle, Manager};
+use tauri::{AppHandle, Emitter, Manager};
 
 pub struct LastCapture {
     pub png_base64: String,
@@ -19,10 +19,10 @@ pub fn store() -> &'static Mutex<Option<LastCapture>> {
 pub fn grab_primary() -> Result<LastCapture, String> {
     use windows::Win32::Graphics::Gdi::{
         BitBlt, CreateCompatibleBitmap, CreateCompatibleDC, DeleteDC, DeleteObject, GetDC,
-        GetDIBits, GetSystemMetrics, ReleaseDC, SelectObject, BITMAPINFO, BITMAPINFOHEADER,
-        CAPTUREBLT, DIB_RGB_COLORS, HDC, SRCCOPY,
+        GetDIBits, ReleaseDC, SelectObject, BITMAPINFO, BITMAPINFOHEADER, CAPTUREBLT,
+        DIB_RGB_COLORS, HGDIOBJ, SRCCOPY,
     };
-    use windows::Win32::UI::WindowsAndMessaging::{SM_CXSCREEN, SM_CYSCREEN};
+    use windows::Win32::UI::WindowsAndMessaging::{GetSystemMetrics, SM_CXSCREEN, SM_CYSCREEN};
 
     unsafe {
         let w = GetSystemMetrics(SM_CXSCREEN);
@@ -36,17 +36,16 @@ pub fn grab_primary() -> Result<LastCapture, String> {
         if src_dc.is_invalid() {
             return Err("GetDC 失败".into());
         }
-        let guard = ScopeGuard::new(|| ReleaseDC(None, src_dc));
+        let guard = ScopeGuard::new(|| {
+            let _ = ReleaseDC(None, src_dc);
+        });
 
-        let mem_dc = CreateCompatibleDC(Some(src_dc));
+        let mem_dc = CreateCompatibleDC(src_dc);
         let bmp = CreateCompatibleBitmap(src_dc, w, h);
-        let old = SelectObject(mem_dc, bmp.into());
+        let old = SelectObject(mem_dc, HGDIOBJ(bmp.0));
 
         let mut result: Result<LastCapture, String> = Err("BitBlt 失败".into());
-        if BitBlt(mem_dc, 0, 0, w, h, Some(src_dc), 0, 0, SRCCOPY | CAPTUREBLT)
-            .ok()
-            .is_ok()
-        {
+        if BitBlt(mem_dc, 0, 0, w, h, src_dc, 0, 0, SRCCOPY | CAPTUREBLT).is_ok() {
             let mut bmi: BITMAPINFO = std::mem::zeroed();
             bmi.bmiHeader.biSize = std::mem::size_of::<BITMAPINFOHEADER>() as u32;
             bmi.bmiHeader.biWidth = w;
@@ -60,8 +59,8 @@ pub fn grab_primary() -> Result<LastCapture, String> {
                 bmp,
                 0,
                 h as u32,
-                buf.as_mut_ptr().cast(),
-                &bmi,
+                Some(buf.as_mut_ptr().cast()),
+                &mut bmi,
                 DIB_RGB_COLORS,
             );
             result = if got == h {
@@ -81,12 +80,12 @@ pub fn grab_primary() -> Result<LastCapture, String> {
                     height: h as u32,
                 })
             } else {
-                Err("GetDIBits 失败".into());
+                Err("GetDIBits 失败".into())
             };
         }
 
         SelectObject(mem_dc, old);
-        let _ = DeleteObject(bmp.into());
+        let _ = DeleteObject(HGDIOBJ(bmp.0));
         let _ = DeleteDC(mem_dc);
         drop(guard);
         result

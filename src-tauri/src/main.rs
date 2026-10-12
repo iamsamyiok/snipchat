@@ -66,12 +66,8 @@ fn main() {
             })?;
 
             // 框选浮层：透明置顶全屏
-            WebviewWindowBuilder::new(
-                app,
-                "overlay",
-                WebviewUrl::app("overlay.html".into()),
-            )
-            .title("overlay")
+            WebviewWindowBuilder::new(app, "overlay", WebviewUrl::App("overlay.html".into()))
+                .title("overlay")
             .fullscreen(true)
             .decorations(false)
             .transparent(true)
@@ -81,12 +77,8 @@ fn main() {
             .build()?;
 
             // 编辑器：隐藏待命
-            WebviewWindowBuilder::new(
-                app,
-                "editor",
-                WebviewUrl::app("editor.html".into()),
-            )
-            .title("SnipChat · 标注")
+            WebviewWindowBuilder::new(app, "editor", WebviewUrl::App("editor.html".into()))
+                .title("SnipChat · 标注")
             .decorations(false)
             .resizable(true)
             .visible(false)
